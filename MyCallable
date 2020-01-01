@@ -1,0 +1,59 @@
+package testPackage;
+
+import java.io.IOException;
+import java.net.ConnectException;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.net.telnet.TelnetClient;
+import org.slf4j.*;
+
+public class MyCallable implements Callable<Map> {
+	private static final Logger LOGGER = LoggerFactory.getLogger(MultiThread.class);
+	String status;
+	private static Map<String, String> map = new HashMap<String, String>();
+	private List<String> number;
+
+	public MyCallable(List<String> number) {
+		this.number = number;
+	}
+
+	@Override
+	public Map call() throws Exception {
+		TelnetClient tel = new TelnetClient();
+		Iterator<String> itr = number.iterator();
+		
+		while(itr.hasNext()) {
+			
+			String str = itr.next();
+			String[] strlist = StringUtils.split(str, ':');
+			int port = Integer.parseInt(strlist[1]);
+			try {
+				tel.setDefaultTimeout(10);
+				tel.connect(strlist[0], port);
+				status = "success";
+				map.put(strlist[0], status);
+				System.out.println(Thread.currentThread().getId());
+			}catch (IOException e) {
+				
+				e.printStackTrace();
+			}finally{			
+				status = "failed";
+				map.put(strlist[0], status);
+				tel.disconnect();
+			}
+		}
+		return map;
+//		int sum = 0;
+//		for (int i = 1; i <=number.size(); i++) {
+//			System.out.println(Thread.currentThread().getName());
+//			sum = sum+i;
+//		}
+//		return sum;
+	}
+
+}
